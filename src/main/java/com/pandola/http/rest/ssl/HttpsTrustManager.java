@@ -1,4 +1,4 @@
-package com.pandora.utils.net.http.ssl;
+package com.pandola.http.rest.ssl;
 
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.CertificateException;
