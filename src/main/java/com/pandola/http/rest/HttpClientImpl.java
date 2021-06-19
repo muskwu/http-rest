@@ -1,7 +1,8 @@
 package com.pandola.http.rest;
 
-import com.pandora.utils.net.http.ssl.HttpsHostNameVerifier;
-import com.pandora.utils.net.http.ssl.HttpsTrustManager;
+
+import com.pandola.http.rest.ssl.HttpsHostNameVerifier;
+import com.pandola.http.rest.ssl.HttpsTrustManager;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -10,8 +11,6 @@ import javax.net.ssl.TrustManager;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
@@ -61,6 +60,9 @@ public class HttpClientImpl implements HttpClient {
       connection.disconnect();
     }
   }
+
+
+
 
   private void connect(HttpURLConnection connection) {
     try
@@ -113,11 +115,6 @@ public class HttpClientImpl implements HttpClient {
 
 
 
-
-
-
-
-
   private void sendRequestBody(HttpURLConnection connection, String requestBody) {
     try
     {
@@ -130,8 +127,6 @@ public class HttpClientImpl implements HttpClient {
       logSendRequestIOException(connection, ioe, requestBody);
     }
   }
-
-
 
 
 
@@ -159,6 +154,8 @@ public class HttpClientImpl implements HttpClient {
     }
   }
 
+
+
   private byte[] tryReadBinaryResult(HttpURLConnection connection) {
     try {
       return readBinaryResult(connection);
@@ -170,6 +167,9 @@ public class HttpClientImpl implements HttpClient {
       ), e);
     }
   }
+
+
+
 
   private String readResultString(HttpURLConnection connection, boolean success) throws IOException {
     InputStream is = null ;
