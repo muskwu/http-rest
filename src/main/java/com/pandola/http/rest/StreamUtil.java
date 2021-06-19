@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class StreamUtil {
+
+
   /**
    * Reads all bytes from an input stream into a byte array. Does not close the stream.
    * The method is adopted from
@@ -24,6 +26,9 @@ public class StreamUtil {
     copy(in, out);
     return out.toByteArray();
   }
+
+
+
 
   /**
    * Copies all bytes from the input stream to the output stream. Does not close or flush either
@@ -51,6 +56,10 @@ public class StreamUtil {
     }
     return total;
   }
+
+
+
+
 
   private static void validateArguments(InputStream from, OutputStream to) {
     String fromNullErrorMessage = "";

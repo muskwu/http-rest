@@ -18,7 +18,9 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 public class HttpClientImpl implements HttpClient {
+
   private int connectTimeoutMillis;
+
   private int readTimeoutMillis;
 
   /**
@@ -38,10 +40,15 @@ public class HttpClientImpl implements HttpClient {
     this.readTimeoutMillis = readTimeoutMillis;
   }
 
+
+
   @Override
   public HttpResponse sendRequest(HttpMethod method, String url, String requestBody, String contentType) {
     return this.sendRequest(method, url, requestBody, contentType, new HashMap<>());
   }
+
+
+
 
   @Override
   public HttpResponse sendRequest(HttpMethod method, String url, String requestBody, String contentType, Map<String, String> headers) {
@@ -60,10 +67,8 @@ public class HttpClientImpl implements HttpClient {
     {
       connection.connect();
     } catch (IOException e) {
-      throw new HttpCallException(String.format(
-          "Failed to connect to url: %s. Reason: %s",
-          connection.getURL(), e.getMessage()
-      ));
+      String msg = String.format("Failed to connect to url: %s. Reason: %s", connection.getURL(), e.getMessage()) ;
+      throw new HttpCallException(msg);
     }
   }
 
@@ -83,9 +88,9 @@ public class HttpClientImpl implements HttpClient {
         .code(status)
         .responseHeaders(connection.getHeaderFields());
 
-    boolean successStatus = status < 400;
+    boolean success = status < 400;
 
-    if (successStatus) {
+    if (success) {
       if (isOctetStream(connection))
       {
         byte[] result = tryReadBinaryResult(connection);
@@ -109,46 +114,6 @@ public class HttpClientImpl implements HttpClient {
 
 
 
-  private HttpURLConnection prepareConnection(HttpMethod method, String url, String contentType, Map<String, String> headers) {
-    try
-    {
-
-      HttpURLConnection conn = null ;
-      if(url.startsWith("https"))
-      {
-        SSLSocketFactory sslSocketFactory = null;
-        try {
-          TrustManager[] trustManagers = { new HttpsTrustManager() };
-          SSLContext sslContext = SSLContext.getInstance("SSL");
-          sslContext.init(null, trustManagers, new SecureRandom());
-          sslSocketFactory = sslContext.getSocketFactory();
-        } catch (NoSuchAlgorithmException e) {
-          e.printStackTrace();
-        } catch (KeyManagementException e2) {
-          e2.printStackTrace();
-        }
-        URL endpoint = new URL(url);
-        HttpsURLConnection conns = (HttpsURLConnection) endpoint.openConnection();
-        conns.setSSLSocketFactory(sslSocketFactory);
-        conns.setHostnameVerifier(new HttpsHostNameVerifier());
-        conn = conns ;
-      }
-      else
-      {
-        URL endpoint = new URL(url);
-        conn = (HttpURLConnection) endpoint.openConnection();
-      }
-      conn.setRequestMethod(method.name());
-      conn.setRequestProperty("Content-Type", contentType);
-      headers.forEach(conn::setRequestProperty);
-      conn.setDoOutput(true);
-      conn.setConnectTimeout(connectTimeoutMillis);
-      conn.setReadTimeout(readTimeoutMillis);
-      return conn;
-    } catch (IOException connectionException) {
-      throw new HttpCallException(String.format("Failed to connect to url: %s", url), connectionException);
-    }
-  }
 
 
 
@@ -173,8 +138,7 @@ public class HttpClientImpl implements HttpClient {
   private int getResponseCode(HttpURLConnection connection) {
     try {
       return connection.getResponseCode();
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       throw new HttpCallException("Can't get response code, assuming failure", e);
     }
   }
@@ -282,5 +246,60 @@ public class HttpClientImpl implements HttpClient {
     } catch (Exception ex) {
       throw new IllegalStateException(ex) ;
     }
+  }
+
+
+
+  private HttpURLConnection prepareConnection(HttpMethod method, String url, String contentType, Map<String, String> headers) {
+    try
+    {
+      HttpURLConnection conn = newHttpURLConnection(url) ;
+      conn.setRequestMethod(method.name());
+      conn.setRequestProperty("Content-Type", contentType);
+      headers.forEach(conn::setRequestProperty);
+      conn.setDoOutput(true);
+      conn.setConnectTimeout(connectTimeoutMillis);
+      conn.setReadTimeout(readTimeoutMillis);
+      return conn;
+    } catch (IOException connectionException) {
+      throw new HttpCallException(String.format("Failed to connect to url: %s", url), connectionException);
+    }
+  }
+
+
+  private static HttpURLConnection newHttpURLConnection(String url) {
+    try
+    {
+      HttpURLConnection conn = null ;
+      if(url.startsWith("https"))
+      {
+        conn = buildHttpsConnection(url) ;
+      }
+      else
+      {
+        URL endpoint = new URL(url);
+        conn = (HttpURLConnection) endpoint.openConnection();
+      }
+      return conn ;
+    }catch (Exception ex) {throw new IllegalStateException(ex) ; }
+  }
+
+
+
+  private static HttpURLConnection buildHttpsConnection(String url) {
+    try
+    {
+      TrustManager[] trustManagers = { new HttpsTrustManager() };
+      SSLContext sslContext = SSLContext.getInstance("SSL");
+      sslContext.init(null, trustManagers, new SecureRandom());
+      SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+      URL endpoint = new URL(url);
+      HttpsURLConnection conn = (HttpsURLConnection) endpoint.openConnection();
+      conn.setSSLSocketFactory(sslSocketFactory);
+      conn.setHostnameVerifier(new HttpsHostNameVerifier());
+      return conn ;
+    }catch (Exception ex) { throw new IllegalStateException(ex) ; }
+
   }
 }
